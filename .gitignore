@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+
+# OS files
+.DS_Store

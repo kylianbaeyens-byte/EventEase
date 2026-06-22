@@ -1,0 +1,71 @@
+@page "/register/{Id:int}"
+@using MyBlazorApp.Models
+@using MyBlazorApp.Services
+@inject EventService EventService
+@inject UserSessionService Session
+
+<PageTitle>Register</PageTitle>
+
+@if (_event is null)
+{
+    <h1>Event not found</h1>
+    <p>We couldn't find an event with id @Id.</p>
+    <a class="btn btn-primary" href="events">Back to events</a>
+}
+else if (Session.IsAttending(_event.Id))
+{
+    <h1>You're registered!</h1>
+    <p>Thanks @Session.UserName, you're registered for <strong>@_event.Name</strong> on @_event.Date.ToShortDateString().</p>
+    <a class="btn btn-primary" href="attendance">View my events</a>
+    <a class="btn btn-outline-secondary" href="events">Back to events</a>
+}
+else
+{
+    <h1>Register for @_event.Name</h1>
+    <p class="text-muted">@_event.Date.ToShortDateString() &middot; @_event.Location</p>
+
+    @* DataAnnotationsValidator validates the model; OnInvalidSubmit keeps
+       error handling graceful by showing messages instead of submitting. *@
+    <EditForm Model="_registration" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Your name</label>
+            <InputText class="form-control" @bind-Value="_registration.Name" />
+            <ValidationMessage For="() => _registration.Name" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <InputText type="email" class="form-control" @bind-Value="_registration.Email" />
+            <ValidationMessage For="() => _registration.Email" />
+        </div>
+        <button type="submit" class="btn btn-success">Confirm registration</button>
+        <a class="btn btn-outline-secondary" href="@($"events/{_event.Id}")">Cancel</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private EventDetail? _event;
+    private readonly RegistrationModel _registration = new();
+
+    protected override void OnParametersSet()
+    {
+        _event = EventService.GetEvent(Id);
+
+        // Pre-fill if the user already started a session this visit.
+        if (Session.IsSignedIn)
+        {
+            _registration.Name = Session.UserName!;
+            _registration.Email = Session.UserEmail!;
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        Session.Register(_registration, _event!.Id);
+    }
+}

@@ -1,0 +1,33 @@
+@page "/events"
+@using MyBlazorApp.Components
+@using MyBlazorApp.Models
+@using MyBlazorApp.Services
+@inject EventService EventService
+
+<PageTitle>Events</PageTitle>
+
+<h1>Upcoming Events</h1>
+
+<p>Browse the events below and navigate to details or registration.</p>
+
+@if (_events.Count == 0)
+{
+    <p><em>No events available.</em></p>
+}
+else
+{
+    @* Virtualize only renders the cards in view, keeping the list fast
+       even with large datasets instead of rendering every item up front. *@
+    <Virtualize Items="_events" Context="ev" ItemSize="140">
+        <EventCard Event="ev" />
+    </Virtualize>
+}
+
+@code {
+    private List<EventDetail> _events = new();
+
+    protected override void OnInitialized()
+    {
+        _events = EventService.GetEvents().ToList();
+    }
+}

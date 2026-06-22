@@ -1,0 +1,37 @@
+@page "/events/{Id:int}"
+@using MyBlazorApp.Components
+@using MyBlazorApp.Models
+@using MyBlazorApp.Services
+@inject EventService EventService
+@inject NavigationManager Navigation
+
+<PageTitle>Event Details</PageTitle>
+
+@if (_event is null)
+{
+    <h1>Event not found</h1>
+    <p>We couldn't find an event with id @Id.</p>
+    <a class="btn btn-primary" href="events">Back to events</a>
+}
+else
+{
+    <h1>@_event.Name</h1>
+
+    @* Editable card demonstrates two-way binding against the live model. *@
+    <EventCard Event="_event" Editable="true" />
+
+    <a class="btn btn-success" href="@($"register/{_event.Id}")">Register for this event</a>
+    <a class="btn btn-outline-secondary" href="events">Back to events</a>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private EventDetail? _event;
+
+    protected override void OnParametersSet()
+    {
+        _event = EventService.GetEvent(Id);
+    }
+}

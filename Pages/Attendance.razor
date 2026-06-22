@@ -1,0 +1,86 @@
+@page "/attendance"
+@using MyBlazorApp.Models
+@using MyBlazorApp.Services
+@implements IDisposable
+@inject EventService EventService
+@inject UserSessionService Session
+
+<PageTitle>My Events</PageTitle>
+
+<h1>My Events</h1>
+
+@if (!Session.IsSignedIn)
+{
+    <p>You haven't registered for any events yet.</p>
+    <a class="btn btn-primary" href="events">Browse events</a>
+}
+else
+{
+    <p>Signed in as <strong>@Session.UserName</strong> (@Session.UserEmail).</p>
+
+    @if (_attending.Count == 0)
+    {
+        <p>You're not attending any events right now.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ev in _attending)
+                {
+                    <tr>
+                        <td>@ev.Name</td>
+                        <td>@ev.Date.ToShortDateString()</td>
+                        <td>@ev.Location</td>
+                        <td>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    @onclick="() => Cancel(ev.Id)">Cancel</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <button class="btn btn-outline-secondary" @onclick="Session.SignOut">Sign out</button>
+    <a class="btn btn-primary" href="events">Browse more events</a>
+}
+
+@code {
+    private List<EventDetail> _attending = new();
+
+    protected override void OnInitialized()
+    {
+        // Re-render whenever the session state changes (e.g. a cancellation).
+        Session.OnChange += StateHasChanged;
+        Refresh();
+    }
+
+    private void Cancel(int eventId)
+    {
+        Session.CancelAttendance(eventId);
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _attending = Session.AttendingEventIds
+            .Select(EventService.GetEvent)
+            .Where(e => e is not null)
+            .Select(e => e!)
+            .ToList();
+    }
+
+    public void Dispose()
+    {
+        Session.OnChange -= StateHasChanged;
+    }
+}

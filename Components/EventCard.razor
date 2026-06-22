@@ -1,0 +1,62 @@
+@using MyBlazorApp.Models
+@using System.ComponentModel.DataAnnotations
+
+<div class="card mb-3 shadow-sm">
+    <div class="card-body">
+        @if (Editable)
+        {
+            @* EditForm + DataAnnotationsValidator validate the two-way bound fields,
+               so invalid or empty input is rejected instead of silently saved. *@
+            <EditForm Model="Event" OnValidSubmit="OnValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-2">
+                    <label class="form-label">Event name</label>
+                    <InputText class="form-control" @bind-Value="Event.Name" />
+                    <ValidationMessage For="() => Event.Name" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Date</label>
+                    <InputDate class="form-control" @bind-Value="Event.Date" />
+                    <ValidationMessage For="() => Event.Date" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Location</label>
+                    <InputText class="form-control" @bind-Value="Event.Location" />
+                    <ValidationMessage For="() => Event.Location" />
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            </EditForm>
+        }
+        else
+        {
+            <h5 class="card-title">@Event.Name</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@Event.Date.ToShortDateString()</h6>
+            <p class="card-text">@Event.Location</p>
+
+            <a class="btn btn-primary btn-sm" href="@($"events/{Event.Id}")">Details</a>
+            <a class="btn btn-outline-secondary btn-sm" href="@($"register/{Event.Id}")">Register</a>
+        }
+    </div>
+</div>
+
+@code {
+    // The event this card renders. Required so every card is bound to real data.
+    [Parameter, EditorRequired]
+    public EventDetail Event { get; set; } = default!;
+
+    // When true the card shows editable, validated inputs that two-way bind to Event.
+    [Parameter]
+    public bool Editable { get; set; }
+
+    // Raised after the edited event passes validation.
+    [Parameter]
+    public EventCallback<EventDetail> OnSaved { get; set; }
+
+    private async Task OnValidSubmit()
+    {
+        await OnSaved.InvokeAsync(Event);
+    }
+}
